@@ -1,0 +1,12 @@
+body{
+		background-image: url('../img/back_main.jpg');
+		background-size: cover;
+		background-repeat: no-repeat;
+}
+h3{
+		padding-left: 20px;
+		padding-bottom: 10px;
+}
+h4{
+		padding-left: 40px;
+}
