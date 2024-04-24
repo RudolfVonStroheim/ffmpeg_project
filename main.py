@@ -4,8 +4,16 @@ from data import db_session
 from data.user import User
 from data.conversion import Conversion
 from forms.user import RegisterForm, LoginForm, Error
+from flask_login import LoginManager
 
 app = Flask(__name__)
+login_m = LoginManager()
+login_m.init_app(app)
+
+@login_m.user_loader
+def get_user(user_id):
+    sess = db_session.create_session()
+    return sess.query(User).get(user_id)
 
 @app.route('/')
 def index():
@@ -20,27 +28,27 @@ def register():
         sess = db_session.create_session()
         if sess.query(User).filter(User.username == form.username.data).first():
             return render_template("register.html", title="Регистрация", form=form, message="Такой пользователь уже есть")
-        user = User(name=form.name.data, email=form.email.data)
+        user = User(name=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
         sess.add(user)
         sess.commit()
         return redirect("/login")
     return render_template("register.html", title="Регистрация", form=form)
 
-
-@app.route("/login"):
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     form = LoginForm()
-    sess = db_session.create_session()
     if form.validate_on_submit():
-        username = form.username.data
-        passwd = form.password.data
-        try:
-            form.set_password(username)
-        except Error as e:
-            return render_template("login.html", title="Вход", form=form, message=e.msg)
-        if form.check_password(passwd):
-            return redirect("/profile")
-        
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            return redirect("/")
+        return render_template('login.html', title="Вход"
+                               message="Неправильный логин или пароль",
+                               form=form)
+    return render_template('login.html', title='Вход', form=form)
+       
 if __name__ == "__main__":
     db_session.global_init("db/converter.db")
     app.run("127.0.0.1", 8080)

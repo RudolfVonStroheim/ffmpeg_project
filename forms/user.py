@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, EmailField, SubmitField
+from wtforms import BooleanField, PasswordField, StringField, EmailField, SubmitField
 from werkzeug import generate_password_hash, check_password_hash
 from wtforms.validators import DataRequired
 from ..data import db_session
@@ -30,12 +30,6 @@ class RegisterForm(FlaskForm):
 class LoginForm(FlaskForm):
     username = StringField("Имя пользователя", validators=[DataRequired()])
     password = PasswordField("Пароль", validators=[DataRequired()])
+    remember_me = BooleanField("Запомнить меня")
+    submit = SubmitField('Войти')
 
-    def set_password(username):
-        sess = db_session.create_session()
-        if not sess.query(User).filter(User.username == username).first:
-            raise Error("Такого пользователя нет")
-        self.hashed_password = sess.query(User).filter(User.username == username).first()
-
-    def check_password(self, passwd):
-        return check_password_hash(self.hashed_password, passwd)
