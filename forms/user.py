@@ -1,9 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, PasswordField, StringField, EmailField, SubmitField
-from werkzeug import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.validators import DataRequired
-from ..data import db_session
-from ..data.user import User
 
 
 class Error(Exception):
