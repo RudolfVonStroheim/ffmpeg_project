@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Загрузка</h4>
+<h4>Максимальный размер файла - 100Мб</h4>
+<form action="" method="post">
+		{{ form.hidden_tag() }}
+		<p>
+		{{ form.file.label }}<br>
+		{{ form.file(class="form-control") }}<br>
+		{% for error in form.file.errors %}
+		<p class="alert alert-danger" role="alert">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>
+		{{ form.submit.label }}<br>
+		{{ form.submit(class="form-control") }}<br>
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<div>{{ msg }}</div>
+</form>
+{% endblock %}
