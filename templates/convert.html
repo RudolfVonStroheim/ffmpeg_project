@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<form action="" method="POST">
+		{{form.hidden_tag()}}
+		<p>{{ form.select_format.label }}<br>
+		{{ form.select_format(class="form-control") }}<br>
+		{% for error in form.select_format.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>{{ form.select_vcodec.label }}<br>
+		{{ form.select_vcodec(class="form-control") }}<br>
+		{% for error in form.select_vcodec.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>{{ form.select_acodec.label }}<br>
+		{{ form.select_acodec(class="form-control") }}<br>
+		{% for error in form.select_acodec.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>{{ form.select_scodec.label }}<br>
+		{{ form.select_scodec(class="form-control") }}<br>
+		{% for error in form.select_scodec.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>{{ form.video_streams.label }}<br>
+		{{ form.video_streams(class="form-control") }}<br>
+		{% for error in form.video_streams.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>{{ form.audio_streams.label }}<br>
+		{{ form.audio_streams(class="form-control") }}<br>
+		{% for error in form.audio_streams.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>{{ form.sub_streams.label }}<br>
+		{{ form.sub_streams(class="form-control") }}<br>
+		{% for error in form.sub_streams.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+		<p>{{ form.submit.label }}<br>
+		{{ form.submit(class="form-control") }}<br>
+		{% for error in form.submit.errors %}
+		<p class="alert alert-danger">
+		{{ error }}
+		</p>
+		{% endfor %}
+		</p>
+</form>
+{% endblock %}
