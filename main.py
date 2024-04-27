@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, send_file
 import os
 from flask_wtf import FlaskForm
 from sqlalchemy.sql.dml import ReturningDelete
@@ -8,6 +8,7 @@ from data import db_session
 from data.user import User
 from data.conversion import Conversion
 from converter import Converter
+from forms.converter import ConverterForm
 from forms.user import RegisterForm, LoginForm
 from flask_login import LoginManager, login_user
 from forms.file import UploadForm
@@ -67,9 +68,32 @@ def upload():
             return render_template('upload.html', title="Загрузка", msg="Недопустимый формат файла или превышен допустимый размер файла.", form=form)
     return render_template('upload.html', title="Загрузка", form=form)
 
-@app.route('/convert')
-def convert():
-    pass
+@app.route('/convert/<filename>')
+def convert(filename):
+    form = ConverterForm()
+    converter = Converter(filename)
+    form.select_format.choices = [(f, f) for f in ALLOWED_EXTENSIONS]
+    form.select_vcodec.choices = [(f, f) for f in converter.video_codecs]
+    form.select_acodec.choices = [(f, f) for f in converter.audio_codecs]
+    form.select_scodec.choices = [(f, f) for f in converter.sub_codecs]
+    form.video_streams.choices = [(f, f) for f in converter.video]
+    form.audio_streams.choices = [(f, f) for f in converter.audio]
+    form.sub_streams.choices = [(f, f) for f in converter.sub]
+    if form.validate_on_submit():
+        converter.change_format(form.select_format)
+        converter.change_video_codec(form.select_vcodec.data)
+        converter.change_audio_codec(form.select_acodec.data)
+        converter.change_sub_codec(form.select_scodec.data)
+        streams = {"audio": form.audio_streams.data, "video": form.video_streams.data, "sub": form.sub_streams.data}
+        converter.change_streams(streams)
+        out = converter.process()
+        return redirect(f'/success/{out}')
+    return render_template("convert.html", title="Конвертация", form=form)
+
+@app.route("/success/<output>")
+def success(output):
+    return send_file(f"output/{output}", as_attachment=True)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -72,14 +72,12 @@ class Converter:
 
     def change_streams(self, indexes):
         filters = []
-        for stream_type, indexes in indexes.items():
-            for index in indexes:
-                if stream_type == 'video':
-                    filters.append(f'v:{index}')
-                elif stream_type == 'audio':
-                    filters.append(f'a:{index}')
-                elif stream_type == 'subs':
-                    filters.append(f's:{index}')
+        for v_index in indexes["video"]:
+            filters.append(f"v:{v_index}")
+        for a_index in indexes["audio"]:
+            filters.append(f"a:{a_index}")
+        for s_index in indexes["sub"]:
+            filters.append(f"s:{s_index}")
         stream = ffmpeg.input(f'input/{self.filename_old}')
         stream = ffmpeg.filter(stream, 'null', *filters)
         output_path = f'tmp/{self.filename_old}'
