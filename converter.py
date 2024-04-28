@@ -37,11 +37,11 @@ class Converter:
         output = result.stdout
         codecs = []
         for line in output.split('\n'):
-            if line.startswith('.D.A'):
-                parts = line.split()
+            if line.startswith(' D.A') or line.startswith(".D.A") or line.startswith(" D A"): 
+                parts = line.split() 
                 codec = parts[1]
                 codecs.append(codec)
-                return codecs
+        return codecs
 
     def get_video_codecs(self, filename):
         command = ['ffmpeg', '-codecs', "f", filename, '-hide_banner']
@@ -49,11 +49,11 @@ class Converter:
         output = result.stdout
         codecs = []
         for line in output.split('\n'):
-            if line.startswith('.D.V'):
+            if line.startswith(' D.V'):
                 parts = line.split()
                 codec = parts[1]
                 codecs.append(codec)
-                return codecs
+        return codecs
 
     def get_sub_codecs(self, filename):
         command = ['ffmpeg', '-codecs', "-f", filename, '-hide_banner']
@@ -61,25 +61,27 @@ class Converter:
         output = result.stdout
         codecs = []
         for line in output.split('\n'):
-            if line.startswith('.D.S'):
+            if line.startswith(' D.S'):
                 parts = line.split()
                 codec = parts[1]
                 codecs.append(codec)
-                return codecs
+        return codecs
 
     def get_streams(self):
         return {"video": self.video, "audio": self.audio, "subs": self.sub}
 
     def change_streams(self, indexes):
-        filters = []
-        for v_index in indexes["video"]:
-            filters.append(f"v:{v_index}")
-        for a_index in indexes["audio"]:
-            filters.append(f"a:{a_index}")
-        for s_index in indexes["sub"]:
-            filters.append(f"s:{s_index}")
+
+        input_streams = []
+        for v_index in indexes.get("video", []):
+            input_streams.append(f'-map 0:{v_index}')
+        for a_index in indexes.get("audio", []):
+            input_streams.append(f'-map 0:{a_index}')
+        for s_index in indexes.get("sub", []):
+            input_streams.append(f'-map 0:{s_index}')
+
         stream = ffmpeg.input(f'input/{self.filename_old}')
-        stream = ffmpeg.filter(stream, 'null', *filters)
+        stream = ffmpeg.filter(stream, 'null')  # Добавим пустой фильтр, чтобы FFmpeg создал выходной поток
         output_path = f'tmp/{self.filename_old}'
         stream = ffmpeg.output(stream, output_path, format='null')
         ffmpeg.run(stream)
@@ -108,7 +110,7 @@ class Converter:
                 self.vcodec = vcodecs[0]
             self.video_codecs = vcodecs
         else:
-            vcodec = self.video[0]["codec_name"]
+            vcodec = self.video[0]["codec_name"] if self.video else "copy"
             vcodecs = self.get_video_codecs(self.new_format)
             if vcodec not in vcodecs:
                 self.vcodec = vcodecs[0]
@@ -120,7 +122,7 @@ class Converter:
                 self.acodec = acodecs[0]
             self.audio_codecs = acodecs
         else:
-            acodec = self.audio[0]["codec_name"]
+            acodec = self.audio[0]["codec_name"] if self.audio else "copy"
             acodecs = self.get_audio_codecs(self.new_format)
             if acodec not in acodecs:
                 self.acodec = acodecs[0]
@@ -131,7 +133,7 @@ class Converter:
                 self.scodec = scodecs[0]
             self.sub_codecs = scodecs
         else:
-            scodec = self.sub[0]["codec_name"]
+            scodec = self.sub[0]["codec_name"] if self.sub else "copy"
             scodecs = self.get_sub_codecs(self.new_format)
             if scodec not in scodecs:
                 self.scodec = scodecs[0]
@@ -139,12 +141,12 @@ class Converter:
 
     def process(self):
         if self.streams_changed:
-            path = f'tmp/{self.filename_old}'
+            path = f'"tmp/{self.filename_old}"'
         else:
-            path = f'inp/{self.filename_old}'
-        output_filename = self.filename_old.split(".")[:-1] + self.new_format
-        output_path = f'out/"{output_filename}"'
-        stream = ffmpeg.input(f'input/"{self.filename_old}"')
+            path = f'"input/{self.filename_old}"'
+        output_filename = ".".join(self.filename_old.split(".")[:-1]) + self.new_format
+        output_path = f'"out/{output_filename}"'
+        stream = ffmpeg.input(path)
         stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec, acodec=self.acodec, scodec=self.scodec)
         ffmpeg.run(stream)
 

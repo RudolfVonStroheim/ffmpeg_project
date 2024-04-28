@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, send_file
+from flask import Flask, render_template, redirect, send_file, request
 import os
 from flask_wtf import FlaskForm
 from sqlalchemy.sql.dml import ReturningDelete
@@ -10,7 +10,7 @@ from data.conversion import Conversion
 from converter import Converter
 from forms.converter import ConverterForm
 from forms.user import RegisterForm, LoginForm
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from forms.file import UploadForm
 from pickle import load
 
@@ -19,11 +19,9 @@ login_m = LoginManager()
 login_m.init_app(app)
 app.config["MAX_CONTENT_LENGTH"] = 25 * 2 ** 22
 app.config["UPLOAD_FOLDER"] = "input"
-app.config["SECURITY_KEY"] = "kjhkshjhshdkhjsasjkhdkhskjhapchikhba"
+app.config["SECRET_KEY"] = "kjhkshjhshdkhjsasjkhdkhskjhapchikhba"
 f = open('formats.pickle', 'rb')
 ALLOWED_EXTENSIONS = load(f)
-f.close()
-
 
 @login_m.user_loader
 def get_user(user_id):
@@ -35,6 +33,12 @@ def get_user(user_id):
 def index():
     return render_template('main.html', title='MPEG ONLINE: Easy video and audio converter tool.')
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegisterForm()
@@ -44,8 +48,9 @@ def register():
         sess = db_session.create_session()
         if sess.query(User).filter(User.username == form.username.data).first():
             return render_template("register.html", title="Регистрация", form=form, message="Такой пользователь уже есть")
-        user = User(name=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
+        user = User(username=form.username.data, email=form.email.data)
+        form.set_password(form.password.data)
+        user.password_hashed = form.hashed_password
         sess.add(user)
         sess.commit()
         return redirect("/login")
@@ -53,13 +58,15 @@ def register():
 
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.split('.')[-1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload', methods=["GET", "POST"])
+@login_required
 def upload():
     form = UploadForm()
-    if form.validate_on_submit():
+    if form.validate_on_submit(): 
         file = form.file.data
+        print(file)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
@@ -68,7 +75,7 @@ def upload():
             return render_template('upload.html', title="Загрузка", msg="Недопустимый формат файла или превышен допустимый размер файла.", form=form)
     return render_template('upload.html', title="Загрузка", form=form)
 
-@app.route('/convert/<filename>')
+@app.route('/convert/<filename>', methods=["GET", "POST"])
 def convert(filename):
     form = ConverterForm()
     converter = Converter(filename)
@@ -76,11 +83,11 @@ def convert(filename):
     form.select_vcodec.choices = [(f, f) for f in converter.video_codecs]
     form.select_acodec.choices = [(f, f) for f in converter.audio_codecs]
     form.select_scodec.choices = [(f, f) for f in converter.sub_codecs]
-    form.video_streams.choices = [(f, f) for f in converter.video]
-    form.audio_streams.choices = [(f, f) for f in converter.audio]
-    form.sub_streams.choices = [(f, f) for f in converter.sub]
+    form.video_streams.choices = [(f["index"], f["codec_long_name"]) for f in converter.video]
+    form.audio_streams.choices = [(f["index"], " ".join(f["tags"].values())) for f in converter.audio]
+    form.sub_streams.choices = [(f["index"], " ".join(f["tags"].values())) for f in converter.sub]
     if form.validate_on_submit():
-        converter.change_format(form.select_format)
+        converter.change_format(form.select_format.data)
         converter.change_video_codec(form.select_vcodec.data)
         converter.change_audio_codec(form.select_acodec.data)
         converter.change_sub_codec(form.select_scodec.data)
@@ -102,9 +109,11 @@ def login():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(
             User.username == form.username.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            return redirect("/profile")
+        hashed_password = user.password_hashed
+        if user: 
+            if form.check_password(hashed_password, form.password.data):
+                login_user(user, remember=form.remember_me.data)
+                return redirect("/")
         return render_template('login.html', title="Вход", message="Неправильный логин или пароль", form=form)
     return render_template('login.html', title='Вход', form=form)
 
@@ -112,3 +121,4 @@ def login():
 if __name__ == "__main__":
     db_session.global_init("db/converter.db")
     app.run("127.0.0.1", 8080)
+    f.close()

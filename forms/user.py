@@ -31,3 +31,8 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField("Запомнить меня")
     submit = SubmitField('Войти')
 
+    def check_password(self, hashed_password, password):
+        return check_password_hash(hashed_password, password)
+
+
+

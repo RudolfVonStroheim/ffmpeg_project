@@ -7,16 +7,16 @@
 		{{ form.username.label }}<br>
 		{{ form.username(class="form-control") }}<br>
 		{% for error in form.username.errors %}
-		<p class="alert alert-danger" role="alert">
-		{{ error }}
-		</p>
+				<p class="alert alert-danger" role="alert">
+						{{ error }}
+				</p>
 		{% endfor %}
 		{{ form.password.label }}<br>
 		{{ form.password(class="form-control", type="password") }}<br>
 		{% for error in form.password.errors %}
-		<p class="alert alert-danger" role="alert">
-		{{error}}
-		</p>
+				<p class="alert alert-danger" role="alert">
+						{{error}}
+				</p>
 		{% endfor %}
 		<p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
 		<p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
