@@ -141,11 +141,13 @@ class Converter:
 
     def process(self):
         if self.streams_changed:
-            path = f'"tmp/{self.filename_old}"'
+            path = f'tmp/{self.filename_old}'
         else:
-            path = f'"input/{self.filename_old}"'
+            path = f'input/{self.filename_old}'
+        if self.new_format == "matroska":
+            self.new_format = ".mkv"
         output_filename = ".".join(self.filename_old.split(".")[:-1]) + self.new_format
-        output_path = f'"out/{output_filename}"'
+        output_path = f'out/{output_filename}'
         stream = ffmpeg.input(path)
         stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec, acodec=self.acodec, scodec=self.scodec)
         ffmpeg.run(stream)
