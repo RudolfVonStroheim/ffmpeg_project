@@ -80,10 +80,9 @@ class Converter:
         for s_index in indexes.get("sub", []):
             input_streams.append(f'-map 0:{s_index}')
 
-        stream = ffmpeg.input(f'input/{self.filename_old}')
-        stream = ffmpeg.filter(stream, 'null')  # Добавим пустой фильтр, чтобы FFmpeg создал выходной поток
+        stream = ffmpeg.input(f'input/{self.filename_old}', **{'f': 'lavfi', 'i': 'anullsrc'})
         output_path = f'tmp/{self.filename_old}'
-        stream = ffmpeg.output(stream, output_path, format='null')
+        stream = ffmpeg.output(stream, output_path, format='null', **{"map": input_streams})
         ffmpeg.run(stream)
         self.streams_changed = True
 
