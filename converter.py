@@ -3,6 +3,25 @@ from subprocess import run
 
 
 class Converter:
+
+    formats = {
+        'QuickTime / MOV': 'mov',
+        'MPEG-4 Part 14': 'mp4',
+        'MPEG-4 Part 2': 'mp4',
+        'matroska': 'mkv',
+        'FLV (Flash Video)': 'flv',
+        'WebM': 'webm',
+        'MPEG-PS (Program Stream)': 'mpg',
+        'MPEG-TS (Transport Stream)': 'ts',
+        'MXF (Material eXchange Format)': 'mxf',
+        'DV (Digital Video)': 'dv',
+        'OGG': 'ogg',
+        'HLS (HTTP Live Streaming)': 'm3u8',
+        'DASH': 'mpd',
+        'PCM signed 24-bit little-endian': 'pcm',
+        # Другие форматы...
+    }
+
     def __init__(self, filename):
         probe = ffmpeg.probe(f'input/{filename}')
         self.file_data = probe["format"]
@@ -77,7 +96,7 @@ class Converter:
         for a_index in indexes.get("audio", []):
             input_maps.append(f'-map 0:{a_index}?')
         for s_index in indexes.get("sub", []):
-            input_maps.append(f'-map 0:{s_index}?') 
+            input_maps.append(f'-map 0:{s_index}?')
         self.maps = " ".join(input_maps)
 
     def change_video_codec(self, codec):
@@ -93,6 +112,7 @@ class Converter:
             self.scodec = codec
 
     def change_format(self, new_format):
+        new_format = self.formats[new_format] if new_format in self.formats else new_format
         self.new_format = "." + new_format
         self.check_codecs()
 
@@ -143,7 +163,8 @@ class Converter:
                                    :-1]) + self.new_format
         output_path = f'out/{output_filename}'
         stream = ffmpeg.input(path)
-        stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec, acodec=self.acodec, scodec=self.scodec, map=self.maps)
+        stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec,
+                               acodec=self.acodec, scodec=self.scodec, map=self.maps)
         ffmpeg.run(stream)
 
         return output_filename
