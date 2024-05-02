@@ -1,5 +1,5 @@
 import ffmpeg
-from subprocess import run
+from subprocess import call, run
 
 
 class Converter:
@@ -117,5 +117,5 @@ class Converter:
         output_path = f'output/{output_filename}'
         cmd = ["ffmpeg", "-i", path, "-c:v", self.vcodec, "-c:a", self.acodec, "-c:s", self.scodec, *self.maps, output_path]
         print(*cmd)
-        run(cmd)
+        call(' '.join(cmd))
         return output_filename

@@ -76,6 +76,7 @@ def upload():
     return render_template('upload.html', title="Загрузка", form=form)
 
 @app.route('/convert/<filename>', methods=["GET", "POST"])
+@login_required
 def convert(filename):
     form = ConverterForm()
     converter = Converter(filename)
@@ -111,6 +112,7 @@ def convert(filename):
     return render_template("convert.html", title="Конвертация", form=form)
 
 @app.route("/success/<output>")
+@login_required
 def success(output):
     return send_file(f"output/{output}", as_attachment=True)
 
