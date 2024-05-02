@@ -76,14 +76,14 @@ class Converter:
         return {"video": self.video, "audio": self.audio, "subs": self.sub}
 
     def change_streams(self, indexes):
-        input_maps = ["-map 0"]
+        input_maps = []
         for v_index in indexes.get("video", []):
-            input_maps.append(f'-0:{v_index}')
+            input_maps.append(f'-map 0:{v_index}')
         for a_index in indexes.get("audio", []):
-            input_maps.append(f'-0:{a_index}')
+            input_maps.append(f'-map 0:{a_index}')
         for s_index in indexes.get("sub", []):
-            input_maps.append(f' -0:{s_index}')
-        self.maps = " ".join(input_maps)
+            input_maps.append(f'-map 0:{s_index}')
+        self.maps = input_maps
         print(self.maps)
 
     def change_video_codec(self, codec):
@@ -115,9 +115,7 @@ class Converter:
         output_filename = ".".join(self.filename_old.split(".")[
                                    :-1]) + self.new_format
         output_path = f'output/{output_filename}'
-        stream = ffmpeg.input(path)
-        stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec,
-                               acodec=self.acodec, scodec=self.scodec, map=self.maps)
-        ffmpeg.run(stream)
-
+        cmd = ["ffmpeg", "-i", path, "-c:v", self.vcodec, "-c:a", self.acodec, "-c:s", self.scodec, *self.maps, output_path]
+        print(*cmd)
+        run(cmd)
         return output_filename
