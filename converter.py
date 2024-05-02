@@ -78,11 +78,7 @@ class Converter:
             input_maps.append(f'-map 0:{a_index}?')
         for s_index in indexes.get("sub", []):
             input_maps.append(f'-map 0:{s_index}?') 
-
-        stream = ffmpeg.input(f'input/{self.filename_old}')
-        stream = ffmpeg.output(stream, f'tmp/{self.filename_old}', format='null',map=" ".join(input_maps))
-        ffmpeg.run(stream)
-        self.streams_changed = True
+        self.maps = " ".join(input_maps)
 
     def change_video_codec(self, codec):
         if codec in self.video_codecs:
@@ -97,7 +93,7 @@ class Converter:
             self.scodec = codec
 
     def change_format(self, new_format):
-        self.new_format = new_format
+        self.new_format = "." + new_format
         self.check_codecs()
 
     def check_codecs(self):
@@ -147,8 +143,7 @@ class Converter:
                                    :-1]) + self.new_format
         output_path = f'out/{output_filename}'
         stream = ffmpeg.input(path)
-        stream = ffmpeg.output(
-            stream, output_path, vcodec=self.vcodec, acodec=self.acodec, scodec=self.scodec)
+        stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec, acodec=self.acodec, scodec=self.scodec, map=self.maps)
         ffmpeg.run(stream)
 
         return output_filename
