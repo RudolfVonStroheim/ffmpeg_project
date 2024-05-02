@@ -1,0 +1,3 @@
+#!/bin/bash
+python main.py
+xTunnel 8080
