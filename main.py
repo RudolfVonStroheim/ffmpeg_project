@@ -79,18 +79,31 @@ def upload():
 def convert(filename):
     form = ConverterForm()
     converter = Converter(filename)
-    form.select_format.choices = [(f, f) for f in ALLOWED_EXTENSIONS]
-    form.select_vcodec.choices = [(f, f) for f in converter.video_codecs]
-    form.select_acodec.choices = [(f, f) for f in converter.audio_codecs]
-    form.select_scodec.choices = [(f, f) for f in converter.sub_codecs]
     form.video_streams.choices = [(f["index"], f["codec_long_name"]) for f in converter.video]
     form.audio_streams.choices = [(f["index"], " ".join(f["tags"].values())) for f in converter.audio]
     form.sub_streams.choices = [(f["index"], " ".join(f["tags"].values())) for f in converter.sub]
     if form.validate_on_submit():
-        converter.change_format(form.select_format.data)
-        converter.change_video_codec(form.select_vcodec.data)
-        converter.change_audio_codec(form.select_acodec.data)
-        converter.change_sub_codec(form.select_scodec.data)
+        if form.select_format.data != "Оставить":
+            file_format = form.select_format.data
+        else:
+            file_format = "copy"
+        if form.select_vcodec.data != "Оставить":
+            vcodec = form.select_vcodec.data
+        else:
+            vcodec = "copy"
+        if form.select_acodec.data != "Оставить":
+            acodec = form.select_acodec.data
+        else:
+            acodec = "copy"
+        if form.select_scodec.data != "Оставить":
+            scodec = form.select_scodec.data
+        else:
+            scodec = "copy"
+ 
+        converter.change_format(file_format)
+        converter.change_video_codec(vcodec)
+        converter.change_audio_codec(acodec)
+        converter.change_sub_codec(scodec)
         streams = {"audio": form.audio_streams.data, "video": form.video_streams.data, "sub": form.sub_streams.data}
         converter.change_streams(streams)
         out = converter.process()

@@ -4,22 +4,8 @@ from subprocess import run
 
 class Converter:
 
-    formats = {
-        'QuickTime / MOV': 'mov',
-        'MPEG-4 Part 14': 'mp4',
-        'MPEG-4 Part 2': 'mp4',
+    formats = { 
         'matroska': 'mkv',
-        'FLV (Flash Video)': 'flv',
-        'WebM': 'webm',
-        'MPEG-PS (Program Stream)': 'mpg',
-        'MPEG-TS (Transport Stream)': 'ts',
-        'MXF (Material eXchange Format)': 'mxf',
-        'DV (Digital Video)': 'dv',
-        'OGG': 'ogg',
-        'HLS (HTTP Live Streaming)': 'm3u8',
-        'DASH': 'mpd',
-        'PCM signed 24-bit little-endian': 'pcm',
-        # Другие форматы...
     }
 
     def __init__(self, filename):
@@ -90,14 +76,15 @@ class Converter:
         return {"video": self.video, "audio": self.audio, "subs": self.sub}
 
     def change_streams(self, indexes):
-        input_maps = []
+        input_maps = ["-map 0"]
         for v_index in indexes.get("video", []):
-            input_maps.append(f'-map 0:{v_index}?')
+            input_maps.append(f'-0:{v_index}')
         for a_index in indexes.get("audio", []):
-            input_maps.append(f'-map 0:{a_index}?')
+            input_maps.append(f'-0:{a_index}')
         for s_index in indexes.get("sub", []):
-            input_maps.append(f'-map 0:{s_index}?')
+            input_maps.append(f' -0:{s_index}')
         self.maps = " ".join(input_maps)
+        print(self.maps)
 
     def change_video_codec(self, codec):
         if codec in self.video_codecs:
@@ -112,45 +99,11 @@ class Converter:
             self.scodec = codec
 
     def change_format(self, new_format):
-        new_format = self.formats[new_format] if new_format in self.formats else new_format
+        if new_format != "copy":
+            new_format = self.formats[new_format] if new_format in self.formats else new_format
+        else:
+            new_format = self.filename_old.split('.')[-1]
         self.new_format = "." + new_format
-        self.check_codecs()
-
-    def check_codecs(self):
-        if self.vcodec != "copy":
-            vcodecs = self.get_video_codecs(self.new_format)
-            if self.vcodec not in vcodecs:
-                self.vcodec = vcodecs[0]
-            self.video_codecs = vcodecs
-        else:
-            vcodec = self.video[0]["codec_name"] if self.video else "copy"
-            vcodecs = self.get_video_codecs(self.new_format)
-            if vcodec not in vcodecs:
-                self.vcodec = vcodecs[0]
-            self.video_codecs = vcodecs
-
-        if self.acodec != "copy":
-            acodecs = self.get_audio_codecs(self.new_format)
-            if self.acodec not in acodecs:
-                self.acodec = acodecs[0]
-            self.audio_codecs = acodecs
-        else:
-            acodec = self.audio[0]["codec_name"] if self.audio else "copy"
-            acodecs = self.get_audio_codecs(self.new_format)
-            if acodec not in acodecs:
-                self.acodec = acodecs[0]
-            self.audio_codecs = acodecs
-        if self.scodec != "copy":
-            scodecs = self.get_sub_codecs(self.new_format)
-            if self.scodec not in scodecs:
-                self.scodec = scodecs[0]
-            self.sub_codecs = scodecs
-        else:
-            scodec = self.sub[0]["codec_name"] if self.sub else "copy"
-            scodecs = self.get_sub_codecs(self.new_format)
-            if scodec not in scodecs:
-                self.scodec = scodecs[0]
-            self.sub_codecs = scodecs
 
     def process(self):
         if self.streams_changed:
@@ -161,7 +114,7 @@ class Converter:
             self.new_format = ".mkv"
         output_filename = ".".join(self.filename_old.split(".")[
                                    :-1]) + self.new_format
-        output_path = f'out/{output_filename}'
+        output_path = f'output/{output_filename}'
         stream = ffmpeg.input(path)
         stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec,
                                acodec=self.acodec, scodec=self.scodec, map=self.maps)
