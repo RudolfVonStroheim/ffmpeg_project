@@ -37,8 +37,8 @@ class Converter:
         output = result.stdout
         codecs = []
         for line in output.split('\n'):
-            if line.startswith(' D.A') or line.startswith(".D.A") or line.startswith(" D A"): 
-                parts = line.split() 
+            if line.startswith(' D.A') or line.startswith(".D.A") or line.startswith(" D A"):
+                parts = line.split()
                 codec = parts[1]
                 codecs.append(codec)
         return codecs
@@ -71,25 +71,23 @@ class Converter:
         return {"video": self.video, "audio": self.audio, "subs": self.sub}
 
     def change_streams(self, indexes):
-
-        input_streams = []
+        input_maps = []
         for v_index in indexes.get("video", []):
-            input_streams.append(f'-map 0:{v_index}')
+            input_maps.append(f'-map 0:{v_index}?')
         for a_index in indexes.get("audio", []):
-            input_streams.append(f'-map 0:{a_index}')
+            input_maps.append(f'-map 0:{a_index}?')
         for s_index in indexes.get("sub", []):
-            input_streams.append(f'-map 0:{s_index}')
+            input_maps.append(f'-map 0:{s_index}?') 
 
-        stream = ffmpeg.input(f'input/{self.filename_old}', **{'f': 'lavfi', 'i': 'anullsrc'})
-        output_path = f'tmp/{self.filename_old}'
-        stream = ffmpeg.output(stream, output_path, format='null', **{"map": input_streams})
+        stream = ffmpeg.input(f'input/{self.filename_old}')
+        stream = ffmpeg.output(stream, f'tmp/{self.filename_old}', format='null',map=" ".join(input_maps))
         ffmpeg.run(stream)
         self.streams_changed = True
 
     def change_video_codec(self, codec):
         if codec in self.video_codecs:
             self.vcodec = codec
-    
+
     def change_audio_codec(self, codec):
         if codec in self.audio_codecs:
             self.acodec = codec
@@ -145,11 +143,12 @@ class Converter:
             path = f'input/{self.filename_old}'
         if self.new_format == "matroska":
             self.new_format = ".mkv"
-        output_filename = ".".join(self.filename_old.split(".")[:-1]) + self.new_format
+        output_filename = ".".join(self.filename_old.split(".")[
+                                   :-1]) + self.new_format
         output_path = f'out/{output_filename}'
         stream = ffmpeg.input(path)
-        stream = ffmpeg.output(stream, output_path, vcodec=self.vcodec, acodec=self.acodec, scodec=self.scodec)
+        stream = ffmpeg.output(
+            stream, output_path, vcodec=self.vcodec, acodec=self.acodec, scodec=self.scodec)
         ffmpeg.run(stream)
 
         return output_filename
-
